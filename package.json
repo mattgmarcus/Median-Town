@@ -2,7 +2,7 @@
   "name": "Median-Town",
   "version": "0.0.1",
   "dependencies": {
-    "express": "2.5.x",
+    "express": "3.4.x",
     "d3": "3.3.x"
   },
   "engines": {
