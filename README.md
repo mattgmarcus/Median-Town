@@ -1,4 +1,4 @@
-MedianProj
+Median Town
 ==========
 
 This is a web app that makes it easier to view medians for Dartmouth classes. It's hosted on heroku at: median-town.herokuapp.com
