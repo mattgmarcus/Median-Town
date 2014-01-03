@@ -97,7 +97,7 @@ body {
     font: 16px sans-serif;
 }
 
-.class_description {
+.class_description, .instructor, .offered, .distrib {
     font: 14px sans-serif;
 }
     </style>
@@ -423,6 +423,9 @@ body {
     <div class="col-md-9 col-sm-9">
       <p class="class_title"><strong id="title"></strong></p>
       <p class="class_description"></p>
+      <p class="instructor"><strong id="instructor_label" style="display:none">Instructor: </strong><span id="instructor"></span></p>
+      <p class="distrib"><strong id="distrib_label" style="display:none">Distributive Requirements: </strong><span id="distrib"></span></p>
+      <p class="offered"><strong id="offered_label" style="display:none">Offered: </strong><span id="offered"></span></p>
       <br><br> <!-- This is good for when there's a long course description -->
     </div><!-- /.col-md-9 col-sm-9 -->
   </div><!-- /.row #course_info -->
@@ -444,7 +447,7 @@ var all_data, course_data, trend_data, description_data, department, number, cou
 
 var data_file = "./data/course_data.json";
 var trend_file = "./data/trends.json";
-var description_file = "./data/usable_course_descriptions.json";
+var description_file = "./data/course_descriptions.json";
 
 $.getJSON(description_file, function(d) {
     description_data = d;
@@ -574,6 +577,7 @@ function displayTrends() {
 function displayInfo() {
 	var title_filler = "No title is available for this class";
 	var description_filler = "No description is available for this class";
+	var instructor_filler = distrib_filler = offered_filler = ""
 
 	if (description_data[course]) {
 	    var title = description_data[course].title || title_filler;
@@ -581,10 +585,25 @@ function displayInfo() {
 
 	    var description = description_data[course].description || description_filler;
 	    $(".class_description").text(description);
+
+	    var instructor = description_data[course].instructor || instructor_filler;
+	    $("#instructor_label").css("display", "inline");
+	    $("#instructor").text(instructor);
+
+            var distrib = description_data[course].distrib || distrib_filler;
+	    $("#distrib_label").css("display", "inline");
+            $("#distrib").text(distrib);
+
+            var offered = description_data[course].offered || offered_filler;
+	    $("#offered_label").css("display", "inline");
+            $("#offered").text(offered);
 	}
 	else {
 	    $("#title").text(title_filler);
 	    $(".class_description").text(description_filler);
+            $("#instructor").text(instructor_filler)
+            $("#distrib").text(distrib_filler)
+            $("#offered").text(offered_filler)
 	}
 }
 
@@ -595,6 +614,12 @@ function resetGraph() {
         $("#enrollment_span").empty();
 	$("#title").empty();
 	$(".class_description").empty();
+	$("#instructor_label").css("display", "none");
+	$("#instructor").empty();
+	$("#distrib_label").css("display", "none");
+	$("#distrib").empty()
+	$("#offered_label").css("display", "none");
+	$("#offered").empty()
 }
 
 $(document).ready(function() {
