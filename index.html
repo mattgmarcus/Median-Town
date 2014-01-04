@@ -587,23 +587,20 @@ function displayInfo() {
 	    $(".class_description").text(description);
 
 	    var instructor = description_data[course].instructor || instructor_filler;
-	    $("#instructor_label").css("display", "inline");
+	    if (instructor) { $("#instructor_label").css("display", "inline"); }
 	    $("#instructor").text(instructor);
 
             var distrib = description_data[course].distrib || distrib_filler;
-	    $("#distrib_label").css("display", "inline");
+	    if (distrib) { $("#distrib_label").css("display", "inline"); }
             $("#distrib").text(distrib);
 
             var offered = description_data[course].offered || offered_filler;
-	    $("#offered_label").css("display", "inline");
+	    if (offered) { $("#offered_label").css("display", "inline"); }
             $("#offered").text(offered);
 	}
 	else {
 	    $("#title").text(title_filler);
 	    $(".class_description").text(description_filler);
-            $("#instructor").text(instructor_filler)
-            $("#distrib").text(distrib_filler)
-            $("#offered").text(offered_filler)
 	}
 }
 
