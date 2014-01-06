@@ -10,7 +10,7 @@ app.configure(function () {
     app.use(app.router);    
 });
 
-app.get("/", function(req, res) {
+app.get("/*", function(req, res) {
     var html = fs.readFileSync(htmlfile).toString();
     res.send(html);
 });
