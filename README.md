@@ -1,7 +1,7 @@
 Median Town
 ==========
 
-This is a web app that makes it easier to view medians for Dartmouth classes. It's hosted on heroku at: median-town.herokuapp.com
+This is a web app that makes it easier to view medians for Dartmouth classes. It's hosted on heroku at: http://median-town.herokuapp.com
 
 I was motivated to do this because I was frustrated by both the format the school organized them in (https://www.dartmouth.edu/~reg/transcript/medians/13f.html) and the need to have multiple tabs open if I wanted to see data from a few terms. 
 
