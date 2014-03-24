@@ -22,9 +22,11 @@ def getAvgMedian(medians):
     num_terms = 0
 
     for median in medians:
-        sum_grades += grade_key_dict[median]
+        # Some 14W classes randomly had E medians
+        if "E" != median:
+            sum_grades += grade_key_dict[median]
 
-        num_terms += 1
+            num_terms += 1
 
     sum_grades *= 1.0
     avg_grade = sum_grades / num_terms
@@ -140,7 +142,7 @@ def getMedians(term):
 
 def compileMedians():
     quarters = ["F", "W", "S", "X"]
-    years = ["08", "09", "10", "11", "12", "13"]
+    years = ["08", "09", "10", "11", "12", "13", "14"]
     #courses is a dictionary. The key is the course name. Its content is a list of lists, where each sublist has the term the course was, the number of students enrolled, and the median
     all_courses = {}
 
