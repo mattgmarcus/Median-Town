@@ -62,6 +62,8 @@ def normalizeCourseName(name):
     name = name.string
 
     if -1 != name.find("-"):
+        #The variable parts splits the course name as it appears on the Dartmouth site, 
+        #i.e. "ENGL-015-01", into an array that would be like ["ENGL", "015", "01"]
         parts = name.split("-")
     
         #Get rid of any whitespace
@@ -79,6 +81,11 @@ def normalizeCourseName(name):
             parts[1] = parts[1][2]
         else:
             parts[1] = parts[1][1:]
+
+    #Some courses with multiple sections are expressed like EDUC-09.03
+    #This will remove the end section
+    if "." in parts[1]:
+        parts[1] = parts[1].split(".")[0]
 
     return parts[0] + " " + parts[1]
 
