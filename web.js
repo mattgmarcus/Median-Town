@@ -6,7 +6,8 @@ var sitemapfile = "sitemap.xml";
 var app = express();
 app.configure(function () {
     app.use(express.cookieParser());
-    app.use(express.bodyParser());
+    app.use(express.json());
+    app.use(express.urlencoded());
     app.use('/data', express.static(__dirname + '/data'));
     app.use(app.router);    
 });
