@@ -149,7 +149,7 @@ def getMedians(term):
 
 def compileMedians():
     quarters = ["F", "W", "S", "X"]
-    years = ["08", "09", "10", "11", "12", "13", "14"]
+    years = ["09", "10", "11", "12", "13", "14", "15"]
     #courses is a dictionary. The key is the course name. Its content is a list of lists, where each sublist has the term the course was, the number of students enrolled, and the median
     all_courses = {}
 
