@@ -1,7 +1,10 @@
 Median Town
 ==========
 
-This is a web app that makes it easier to view medians for Dartmouth classes. It's hosted on heroku at: http://median-town.herokuapp.com
+## Description
+This is a web app that makes it easier to view and analyze median grades for Dartmouth classes. It's hosted on Heroku at: http://median-town.herokuapp.com
+
+## Overview
 
 I was motivated to do this because I was frustrated by both the format the school organized them in (https://www.dartmouth.edu/~reg/transcript/medians/13f.html) and the need to have multiple tabs open if I wanted to see data from a few terms. 
 
@@ -9,4 +12,4 @@ I wrote scrapers in python using the BeautifulSoup library to get all the course
 
 The backend runs with node.js and express.
 
-I also learned how to use the d3.js library so that I could represent the data on course medians through graphs. 
+I also learned how to use the d3.js library so that I could represent the data on course medians through graphs.   
