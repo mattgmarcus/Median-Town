@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import sys
 import json
-import time
+import logging
+import sys
 import requests
+from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
 sys.path.append("../lib/BeautifulSoup")
-from bs4 import BeautifulSoup
-import logging
 
 # Configure logging
 logging.basicConfig(
@@ -34,8 +34,9 @@ grade_key_dict = {"A":6, "A/A-":5.5, "A-":5, "A-/B+":4.5, "B+":4, "B+/B":3.5, "B
 def isValidPage(title):
     return -1 != title.find("Median Grades")
 
+
 def getAvgMedian(medians):
-    #Get rid of any spaces
+    # Get rid of any spaces
     medians = ["".join(median.split()) for median in medians]
 
     avg_median = ""
@@ -74,20 +75,21 @@ def getAvgMedian(medians):
 
     return avg_median
 
+
 def normalizeCourseName(name):
-    if None != name.p:
+    if name.p is not None:
         name = name.p
-    elif None != name.div:
+    elif name.div is not None:
         name = name.div
 
     name = name.string
 
     if -1 != name.find("-"):
-        #The variable parts splits the course name as it appears on the Dartmouth site, 
-        #i.e. "ENGL-015-01", into an array that would be like ["ENGL", "015", "01"]
+        # The variable parts splits the course name as it appears on the Dartmouth site, 
+        # i.e. "ENGL-015-01", into an array that would be like ["ENGL", "015", "01"]
         parts = name.split("-")
     
-        #Get rid of any whitespace
+        # Get rid of any whitespace
         parts = [part.strip() for part in parts]
 
     else:
@@ -96,41 +98,47 @@ def normalizeCourseName(name):
 
         parts = [name[:4], name[4:7]]
 
-    #Make sure the course number contains no extraneous zeros
+    # Make sure the course number contains no extraneous zeros
     if "0" == parts[1][0]:
         if "0" == parts[1][1]:
             parts[1] = parts[1][2]
         else:
             parts[1] = parts[1][1:]
 
-    #Some courses with multiple sections are expressed like EDUC-09.03
-    #This will remove the end section
+    # Some courses with multiple sections are expressed like EDUC-09.03
+    # This will remove the end section
     if "." in parts[1]:
         parts[1] = parts[1].split(".")[0]
 
     return parts[0] + " " + parts[1]
 
+
 def normalizeGrade(grade):
-    if None != grade.p:
+    if grade.p is not None:
         return grade.p
-    elif None != grade.div:
+    elif grade.div is not None:
         return grade.div
     else:
         return grade
 
+
 def normalizeSize(size):
-    if None != size.p:
+    if size.p is not None:
         return size.p
-    elif None != size.div:
+    elif size.div is not None:
         return size.div
     else:
         return size
 
 def hasCompleteInfo(course, size, grade):
-    return (" " != course.replace(u"\xa0", u" ")) and (" " != size.string.replace(u"\xa0", u" ")) and (" " != grade.string.replace(u"\xa0", u" "))
+    return (
+        " " != course.replace(u"\xa0", u" ") and
+        " " != size.string.replace(u"\xa0", u" ") and
+        " " != grade.string.replace(u"\xa0", u" ")
+    )
 
 def getMedians(term):
-    #The key is the course name, it contains a list of the enrollment and median grade
+    # The key is the course name, it contains a list of the enrollment and median grade
     median_dict = {}
 
     url = "http://www.dartmouth.edu/~reg/transcript/medians/" + term + ".html"
@@ -153,10 +161,10 @@ def getMedians(term):
             raw_medians = page.table.find_all("tr")
         else:
             return {}
-        #print raw_medians[0].contents[1].string
-        #Some tables have their first entry as the header, this gets rid of that if it does
+        # print raw_medians[0].contents[1].string
+        # Some tables have their first entry as the header, this gets rid of that if it does
         firstRow = raw_medians[0].contents[1]
-        if None != firstRow.p:
+        if firstRow.p is not None:
             firstEntry = firstRow.p.string
         else:
             firstEntry = firstRow.string
@@ -185,7 +193,8 @@ def getMedians(term):
 def compileMedians():
     quarters = ["F", "W", "S", "X"]
     years = ["09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"]
-    #courses is a dictionary. The key is the course name. Its content is a list of lists, where each sublist has the term the course was, the number of students enrolled, and the median
+    # courses is a dictionary. The key is the course name. Its content is a list of lists, 
+    # where each sublist has the term the course was, the number of students enrolled, and the median
     all_courses = {}
 
     for year in years:

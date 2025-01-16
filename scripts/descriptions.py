@@ -1,14 +1,14 @@
 #!/usr/bin/env python
+import json
+import logging
 import re
 import sys
-import json
-import time
 import requests
+from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
 sys.path.append("../lib/BeautifulSoup")
-from bs4 import BeautifulSoup
-import logging
 
 # Configure logging
 logging.basicConfig(
@@ -38,7 +38,7 @@ special_sets = [("AMEL", "Asian-and-Middle-Eastern-Languages-and-Literatures-Ara
 def getDeptUrl(pair):
     if 2 == len(pair):
         return base_url + pair[1] + r"/" + pair[0] + "-" + pair[1] + r"/"
-    elif 3 == len(pair): #I recognize a pair technically has 2 items
+    elif 3 == len(pair):  # I recognize a pair technically has 2 items
         return base_url + pair[1] + r"/" + pair[2] + r"/"
     else:
         logging.error("Invalid pair format in getDeptUrl: %s", pair)
@@ -77,7 +77,7 @@ def getDescription(pair):
     try:
         course_links = set(re.findall(regex_finder, dept_page))
     except (re.error, TypeError):
-        return {} #Put links into set to remove duplicates                                                                                                    
+        return {}  # Put links into set to remove duplicates                                                                                                    
 
     for link in course_links:
         try:
