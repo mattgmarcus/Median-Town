@@ -17,6 +17,14 @@
       .bar:hover {
       fill: LightGreen;
       }
+
+      .line {
+      stroke-width: 2;
+      }
+
+      .dot:hover {
+      fill: LightGreen;
+      }
       
       .axis text {
       font: 11px sans-serif;
@@ -132,6 +140,13 @@ body {
   <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
     <ul class="nav navbar-nav navbar-center">
   <button type="button" class="btn btn-danger navbar-btn navbar-left" id="reset_button">Reset</button>
+  <li class="dropdown">
+        <a class="chartType_dropdown" href="javascript:;" id="chartTypeDropdown">Chart Type <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a class="chartType" id="bar" href="javascript:;">Bar</a></li>
+          <li><a class="chartType" id="line" href="javascript:;">Line</a></li>
+        </ul>
+  </li>
   <li class="dropdown">
         <a class="department_dropdown" href="javascript:;" id="dropdown">Department <b class="caret"></b></a>
         <ul class="dropdown-menu">
@@ -477,6 +492,9 @@ var y = d3.scale.ordinal()
     .domain(["C", "C+/C", "C+", "B-/C+", "B-", "B/B-", "B", "B+/B", "B+", "A-/B+", "A-", "A/A-", "A"])
     .rangePoints([height, 0], 1.5);
 
+var yEnrollment = d3.scale.linear()
+    .range([height, 0]);
+
 var xAxis = d3.svg.axis()
     .scale(x)
     .orient("bottom");
@@ -489,7 +507,11 @@ var tip = d3.tip()
   .attr('class', 'd3-tip')
   .offset([-10, 0])
   .html(function(d) {
-    return "<strong>Median:</strong> <span style='color:gold'>" + d.median + "</span><br><strong>Enrollment:</strongo> <span style='color:gold'>" + d.enrollment + "</span>";
+    return "<div style='text-align:left'>" +
+           "<strong>Term:</strong> <span style='color:gold'>" + d.term + "</span><br>" +
+           "<strong>Median:</strong> <span style='color:gold'>" + (d.median || "No Data") + "</span><br>" +
+           "<strong>Enrollment:</strong> <span style='color:gold'>" + (d.enrollment || "No Data") + "</span>" +
+           "</div>";
   })
 
 var chart = d3.select("svg")
@@ -568,6 +590,64 @@ function populateChart() {
       .on("mouseout", tip.hide);
 }
 
+function populateLineChart() {
+  // Initialize tooltip
+  chart.call(tip);
+  
+  // Update enrollment y-scale domain based on current data
+  yEnrollment.domain([0, d3.max(course_data, function(d) { return +d.enrollment; })]);
+
+  // Create enrollment y-axis
+  var yAxisRight = d3.svg.axis()
+    .scale(yEnrollment)
+    .orient("right");
+
+  // Add the enrollment y-axis
+  chart.append("g")
+    .attr("class", "y axis enrollment")
+    .attr("transform", "translate(" + width + ",0)")
+    .call(yAxisRight)
+    .append("text")
+    .attr("x", 17)
+    .attr("y", -17)
+    .style({"font-size": "19px", "font-weight": "bold"})
+    .attr("dy", ".71em")
+    .text("Enrollment");
+
+  // Create the line generator with handling for missing data
+  var line = d3.svg.line()
+    .x(function(d) { return x(d.term) + x.rangeBand()/2; })
+    .y(function(d) { return d.enrollment ? yEnrollment(+d.enrollment) : yEnrollment(0); })
+    .defined(function(d) { return d.enrollment != null && d.enrollment !== ""; });
+
+  // Add the line path
+  chart.append("path")
+    .datum(course_data)
+    .attr("class", "line")
+    .attr("d", line)
+    .attr("stroke", "DarkGreen")
+    .attr("stroke-width", 2)
+    .attr("fill", "none");
+
+  // Add dots for each data point with enhanced tooltips
+  chart.selectAll(".dot")
+    .data(course_data)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("cx", function(d) { return x(d.term) + x.rangeBand()/2; })
+    .attr("cy", function(d) { return yEnrollment(+d.enrollment); })
+    .attr("r", 4)
+    .attr("fill", "DarkGreen")
+    .on("mouseover", function(d) {
+      d3.select(this).attr("r", 6);  // Enlarge dot on hover
+      tip.show(d);
+    })
+    .on("mouseout", function(d) {
+      d3.select(this).attr("r", 4);  // Reset dot size
+      tip.hide(d);
+    });
+}
+
 function displayError() {
 	$("#course_box").text("No info on " + course + " is available").css("fill", "red");
 }
@@ -608,7 +688,7 @@ function displayInfo() {
 }
 
 function resetGraph() {
-        $("rect").remove();
+        $("rect, path.line, circle.dot, g.enrollment").remove();
 	$("#course_box").empty().css("fill", "black");
         $("#median_span").empty();
         $("#enrollment_span").empty();
@@ -623,10 +703,25 @@ function resetGraph() {
 }
 
 $(document).ready(function() {
+   var currentChartType = 'bar';  // Default to bar chart
+   
    $(".dropdown-menu li a").click(function(){
 	$(".arrow_graphic").attr("visibility", "hidden");
 	var selText = $(this).text();
 	$(this).parents('.dropdown').find('#dropdown').html(selText+' <b class="caret"></b>');
+    });
+
+   $(".chartType").click(function() {
+        currentChartType = $(this).attr("id");
+        $(this).parents('.dropdown').find('.chartType_dropdown').html($(this).text() + ' <b class="caret"></b>');
+        if (course_data) {
+            resetGraph();
+            if (currentChartType === "bar") {
+                populateChart();
+            } else {
+                populateLineChart();
+            }
+        }
     });
 
    $("#reset_button").click(function() {
@@ -673,7 +768,11 @@ console.log(course_data);
 
 	    if (course_data = all_data[course]) {
 	            $("#course_box").text(course);
-          	    populateChart();
+                    if (currentChartType === "bar") {
+                        populateChart();
+                    } else {
+                        populateLineChart();
+                    }
 		    displayTrends();
 		    displayInfo();
 	    }
