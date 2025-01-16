@@ -440,11 +440,11 @@ body {
     <p align="center">Developed by Matt Marcus '16. If you have any suggestions for improvement, blitz me at <a href="mailto:matthew.g.marcus.16@dartmouth.edu">matthew.g.marcus.16@dartmouth.edu</a>. The project is also hosted on github at <a href="http://www.github.com/mattgmarcus/Median-Town">www.github.com/mattgmarcus/Median-Town</a>.</p>
   </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.2/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>
+<script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
 <script>
 
 var all_data, course_data, trend_data, description_data, department, number, course;
@@ -469,21 +469,19 @@ var margin = {top: 50, right: 75, bottom: 50, left: 100},
     width = 1000 - margin.left - margin.right,
     height = 525 - margin.top - margin.bottom;
 
-var x = d3.scale.ordinal()
+var x = d3.scaleBand()
     .domain(["09W", "09S", "09X", "09F", "10W", "10S", "10X", "10F", "11W", "11S", "11X", "11F", "12W", "12S", "12X", "12F", "13W", "13S", "13X", "13F", "14W", "14S", "14X", "14F", "15W", "15S", "15X"])
-    .rangeRoundBands([0, width], 0.1);
+    .range([0, width])
+    .padding(0.1);
 
-var y = d3.scale.ordinal()
+var y = d3.scalePoint()
     .domain(["C", "C+/C", "C+", "B-/C+", "B-", "B/B-", "B", "B+/B", "B+", "A-/B+", "A-", "A/A-", "A"])
-    .rangePoints([height, 0], 1.5);
+    .range([height, 0])
+    .padding(1.5);
 
-var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom");
+var xAxis = d3.axisBottom(x);
 
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left");
+var yAxis = d3.axisLeft(y);
 
 var tip = d3.tip()
   .attr('class', 'd3-tip')
@@ -533,10 +531,10 @@ var arrowData = [{"x": 185, "y": 240}, {"x": 185, "y": 10},
                  {"x": 245, "y": 10}, {"x": 225, "y": 10},
 	         {"x": 225, "y": 240}, {"x": 183, "y": 240}];
 
-var arrowFunction = d3.svg.line()
-			  .x(function(d) { return d.x; })
-			  .y(function(d) { return d.y; })
-			  .interpolate("linear");
+var arrowFunction = d3.line()
+              .x(function(d) { return d.x; })
+              .y(function(d) { return d.y; })
+              .curve(d3.curveLinear);
 
 var arrow = chart.append("g")
      .attr("visibility", "visible")
@@ -563,7 +561,7 @@ function populateChart() {
       .attr("x", function(d) { return x(d.term); })
       .attr("y", function(d) { return y(d.median); })
       .attr("height", function(d) { return height - y(d.median); })
-      .attr("width", x.rangeBand())
+      .attr("width", x.bandwidth())
       .on("mouseover", tip.show)
       .on("mouseout", tip.hide);
 }
