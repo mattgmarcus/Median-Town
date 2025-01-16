@@ -2,7 +2,7 @@
 import sys
 sys.path.append("../lib/BeautifulSoup")
 from bs4 import BeautifulSoup
-import urllib
+import urllib.request
 import json
 
 #Global variables
@@ -49,7 +49,7 @@ def getAvgMedian(medians):
         elif 6 > avg_grade:
             avg_median = "A/A-"
         else:
-            print "Something weird happened in the median calculation"
+            print("Something weird happened in the median calculation")
 
     return avg_median
 
@@ -114,13 +114,23 @@ def getMedians(term):
 
     url = "http://www.dartmouth.edu/~reg/transcript/medians/" + term + ".html"
 
-    page = BeautifulSoup(urllib.urlopen(url))
+    response = urllib.request.urlopen(url)
+    page = BeautifulSoup(response.read().decode('utf-8'), 'html.parser')
 
-    if isValidPage(page.title.string):
+    if page.title and isValidPage(page.title.string):
+        if not page.table:
+            print("No table found in page")
+            return median_dict
+            
         raw_medians = page.table.find_all("tr")
-        #print raw_medians[0].contents[1].string
+        if not raw_medians:
+            print("No rows found in table")
+            return median_dict
+            
         #Some tables have their first entry as the header, this gets rid of that if it does
-        firstRow = raw_medians[0].contents[1]
+        from bs4 import Tag
+        if raw_medians and isinstance(raw_medians[0], Tag) and len(raw_medians[0].contents) > 1:
+            firstRow = raw_medians[0].contents[1]
         if None != firstRow.p:
             firstEntry = firstRow.p.string
         else:
@@ -198,7 +208,7 @@ def getTrendData():
             trend_data[course] = {"median": avg_median, "enrollment": str(avg_enrolled)}
             
         else:
-            print "No data for this course?!?"
+            print("No data for this course?!?")
 
     with open(trend_data_file, "w") as f:
         f.write(json.dumps(trend_data))    
