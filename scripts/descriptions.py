@@ -1,10 +1,31 @@
 #!/usr/bin/env python
 import re
-import urllib
 import sys
 import json
+import time
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 sys.path.append("../lib/BeautifulSoup")
 from bs4 import BeautifulSoup
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Configure retry strategy
+retry_strategy = Retry(
+    total=3,  # number of retries
+    backoff_factor=1,  # wait 1, 2, 4 seconds between retries
+    status_forcelist=[500, 502, 503, 504]  # HTTP status codes to retry on
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+http = requests.Session()
+http.mount("http://", adapter)
+http.mount("https://", adapter)
 
 #Global variables
 course_info_file = "../data/course_descriptions.json"
@@ -20,7 +41,7 @@ def getDeptUrl(pair):
     elif 3 == len(pair): #I recognize a pair technically has 2 items
         return base_url + pair[1] + r"/" + pair[2] + r"/"
     else:
-        print "What was put in?"
+        logging.error("Invalid pair format in getDeptUrl: %s", pair)
         return None
 
 def makeRegex(pair):
@@ -29,20 +50,43 @@ def makeRegex(pair):
     elif 3 == len(pair):
         return r"/en/2014/orc/Departments-Programs-Undergraduate/" + pair[1] + r"/" + pair[2] + r"/\w+-[0-9]+-*[0-9]*"
     else:
-        print "What was put in?"
+        logging.error("Invalid pair format in makeRegex: %s", pair)
         return None
 
 def getDescription(pair):
     descriptions = {}
 
     dept_url = getDeptUrl(pair)
-    dept_page = urllib.urlopen(dept_url).read()
+    if not dept_url:
+        return {}
+    try:
+        logging.info("Fetching department page: %s", dept_url)
+        response = http.get(dept_url, timeout=10)
+        if response.status_code != 200:
+            logging.error("Failed to fetch department page: %s (status: %d)", dept_url, response.status_code)
+            return {}
+        dept_page = response.text
+        logging.info("Successfully fetched department page: %s", dept_url)
+    except requests.RequestException as e:
+        logging.error("Network error fetching department page %s: %s", dept_url, str(e))
+        return {}
 
     regex_finder = makeRegex(pair)
-    course_links = set(re.findall(regex_finder, dept_page)) #Put links into set to remove duplicates                                                                                                    
+    if not regex_finder:
+        return {}
+    try:
+        course_links = set(re.findall(regex_finder, dept_page))
+    except (re.error, TypeError):
+        return {} #Put links into set to remove duplicates                                                                                                    
 
     for link in course_links:
-        course_page = BeautifulSoup(urllib.urlopen(root_url + link))
+        try:
+            response = http.get(root_url + link, timeout=10)
+        except requests.RequestException:
+            continue
+        if response.status_code != 200:
+            continue
+        course_page = BeautifulSoup(response.text, "html.parser")
 
         course = title = description = instructor = distrib = offered = None
 

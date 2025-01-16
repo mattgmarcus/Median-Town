@@ -1,9 +1,30 @@
 #!/usr/bin/env python
 import sys
+import json
+import time
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 sys.path.append("../lib/BeautifulSoup")
 from bs4 import BeautifulSoup
-import urllib
-import json
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Configure retry strategy
+retry_strategy = Retry(
+    total=3,  # number of retries
+    backoff_factor=1,  # wait 1, 2, 4 seconds between retries
+    status_forcelist=[500, 502, 503, 504]  # HTTP status codes to retry on
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+http = requests.Session()
+http.mount("http://", adapter)
+http.mount("https://", adapter)
 
 #Global variables
 course_data_file = "../data/course_data.json"
@@ -49,7 +70,7 @@ def getAvgMedian(medians):
         elif 6 > avg_grade:
             avg_median = "A/A-"
         else:
-            print "Something weird happened in the median calculation"
+            logging.error("Unexpected average grade value in median calculation: %f", avg_grade)
 
     return avg_median
 
@@ -114,10 +135,24 @@ def getMedians(term):
 
     url = "http://www.dartmouth.edu/~reg/transcript/medians/" + term + ".html"
 
-    page = BeautifulSoup(urllib.urlopen(url))
+    try:
+        logging.info("Fetching medians for term: %s", term)
+        response = http.get(url, timeout=10)
+        if response.status_code == 200:
+            page = BeautifulSoup(response.text, "html.parser")
+            logging.info("Successfully fetched medians for term: %s", term)
+        else:
+            logging.error("Failed to fetch medians for term %s (status: %d)", term, response.status_code)
+            return {}
+    except requests.RequestException as e:
+        logging.error("Network error fetching medians for term %s: %s", term, str(e))
+        return {}
 
-    if isValidPage(page.title.string):
-        raw_medians = page.table.find_all("tr")
+    if page and page.title and page.title.string and isValidPage(page.title.string):
+        if page.table:
+            raw_medians = page.table.find_all("tr")
+        else:
+            return {}
         #print raw_medians[0].contents[1].string
         #Some tables have their first entry as the header, this gets rid of that if it does
         firstRow = raw_medians[0].contents[1]
@@ -149,7 +184,7 @@ def getMedians(term):
 
 def compileMedians():
     quarters = ["F", "W", "S", "X"]
-    years = ["09", "10", "11", "12", "13", "14", "15"]
+    years = ["09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"]
     #courses is a dictionary. The key is the course name. Its content is a list of lists, where each sublist has the term the course was, the number of students enrolled, and the median
     all_courses = {}
 
@@ -198,7 +233,7 @@ def getTrendData():
             trend_data[course] = {"median": avg_median, "enrollment": str(avg_enrolled)}
             
         else:
-            print "No data for this course?!?"
+            logging.warning("No enrollment data found for course: %s", course)
 
     with open(trend_data_file, "w") as f:
         f.write(json.dumps(trend_data))    
